@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProfitCalc — Calculateur e-commerce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --surface3: #1e1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f5;
+    --text2: #8888aa;
+    --text3: #55556a;
+    --accent: #4fffb0;
+    --accent2: #00d4ff;
+    --accent3: #ff6b6b;
+    --accent4: #ffd166;
+    --positive: #4fffb0;
+    --negative: #ff6b6b;
+    --neutral: #8888aa;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  [data-theme="light"] {
+    --bg: #f2f2f7;
+    --surface: #ffffff;
+    --surface2: #f8f8fc;
+    --surface3: #efeff4;
+    --border: rgba(0,0,0,0.06);
+    --border2: rgba(0,0,0,0.10);
+    --text: #0a0a0f;
+    --text2: #6060788;
+    --text3: #aaaacc;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --text2: #60607a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background var(--transition), color var(--transition);
+    overflow-x: hidden;
+  }
+
+  /* Ambient background glow */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw;
+    height: 60vh;
+    background: radial-gradient(ellipse, rgba(79,255,176,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 52px 0 28px;
+  }
+
+  .header-left { display: flex; flex-direction: column; }
+
+  .app-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(79,255,176,0.1);
+    border: 1px solid rgba(79,255,176,0.2);
+    border-radius: 20px;
+    padding: 3px 10px 3px 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    width: fit-content;
+  }
+
+  .app-badge span { font-size: 14px; }
+
+  h1 {
+    font-size: clamp(28px, 6vw, 36px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  /* Theme Toggle */
+  .theme-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 50px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text2);
+    font-family: inherit;
+    transition: all var(--transition);
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover { border-color: var(--accent); color: var(--text); }
+  .theme-toggle .icon { font-size: 16px; }
+
+  /* ── Results Panel ── */
+  .results-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .results-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+  }
+
+  .profit-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .profit-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .profit-value {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(36px, 8vw, 52px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    transition: color var(--transition);
+  }
+
+  .profit-value.positive { color: var(--positive); }
+  .profit-value.negative { color: var(--negative); }
+  .profit-value.neutral { color: var(--text2); }
+
+  .profit-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+    margin-top: 8px;
+  }
+
+  .profit-change.positive { background: rgba(79,255,176,0.1); color: var(--positive); }
+  .profit-change.negative { background: rgba(255,107,107,0.1); color: var(--negative); }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .metric-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    transition: all var(--transition);
+  }
+
+  .metric-card:hover { border-color: var(--border2); }
+
+  .metric-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .metric-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+
+  .metric-dot.roi { background: var(--accent4); }
+  .metric-dot.fees { background: var(--accent3); }
+  .metric-dot.revenue { background: var(--accent); }
+
+  .metric-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .metric-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 3px;
+  }
+
+  /* ── Breakdown Bar ── */
+  .breakdown-bar {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .bar-label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .bar-track {
+    height: 8px;
+    background: var(--surface3);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+
+  .bar-segment {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+  }
+
+  .bar-segment.cost { background: var(--accent3); }
+  .bar-segment.fees { background: var(--accent4); }
+  .bar-segment.shipping { background: var(--accent2); }
+  .bar-segment.profit { background: var(--accent); }
+
+  .bar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 7px; height: 7px;
+    border-radius: 2px;
+  }
+
+  /* ── Section ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .section-header {
+    padding: 14px 20px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .section-icon.blue { background: rgba(0,212,255,0.12); }
+  .section-icon.green { background: rgba(79,255,176,0.12); }
+  .section-icon.orange { background: rgba(255,209,102,0.12); }
+  .section-icon.red { background: rgba(255,107,107,0.12); }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  /* ── Platform Picker ── */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .platform-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-align: left;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .platform-btn:hover {
+    border-color: var(--border2);
+    background: var(--surface3);
+  }
+
+  .platform-btn.active {
+    border-color: var(--accent);
+    background: rgba(79,255,176,0.05);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+
+  .platform-emoji { font-size: 20px; margin-bottom: 4px; }
+
+  .platform-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .platform-fee {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .platform-btn.active .platform-fee { color: var(--accent); }
+
+  /* ── Inputs ── */
+  .field-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    transition: background var(--transition);
+  }
+
+  .field-row:last-child { border-bottom: none; }
+  .field-row:hover { background: rgba(255,255,255,0.02); }
+
+  .field-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .field-label {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 400;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .field-label small {
+    display: block;
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 300;
+    margin-top: 1px;
+  }
+
+  .field-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .field-input-wrap .unit {
+    font-size: 13px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+
+  input[type="number"], input[type="text"] {
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-xs);
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    width: 110px;
+    text-align: right;
+    transition: all var(--transition);
+    outline: none;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,255,176,0.1);
+  }
+
+  input[type="number"]::placeholder { color: var(--text3); }
+
+  /* Custom fee row */
+  .custom-fee-row {
+    display: none;
+  }
+
+  .custom-fee-row.visible { display: flex; }
+
+  /* ── Slider ── */
+  .slider-section {
+    padding: 18px 20px;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .slider-title {
+    font-size: 14px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .slider-value-badge {
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent4);
+    min-width: 52px;
+    text-align: center;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--surface3);
+    border-radius: 2px;
+    outline: none;
+    margin-bottom: 8px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent4);
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 2px 8px rgba(255,209,102,0.4);
+    transition: transform var(--transition);
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .slider-impact {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .impact-label {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .impact-values {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+
+  .impact-arrow { color: var(--text3); }
+  .impact-before { color: var(--text2); }
+  .impact-after { color: var(--negative); font-weight: 500; }
+
+  /* ── Reset Button ── */
+  .reset-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .reset-btn:hover { border-color: var(--accent3); color: var(--accent3); background: rgba(255,107,107,0.05); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding-top: 24px;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .results-panel { animation: fadeUp 0.4s ease both; }
+  .section { animation: fadeUp 0.4s ease both; }
+  .section:nth-child(2) { animation-delay: 0.05s; }
+  .section:nth-child(3) { animation-delay: 0.1s; }
+  .section:nth-child(4) { animation-delay: 0.15s; }
+  .section:nth-child(5) { animation-delay: 0.2s; }
+
+  .value-flash {
+    animation: flash 0.3s ease;
+  }
+
+  @keyframes flash {
+    0% { opacity: 1; }
+    30% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
+  /* ── Error state ── */
+  .error-msg {
+    display: none;
+    background: rgba(255,107,107,0.08);
+    border: 1px solid rgba(255,107,107,0.2);
+    border-radius: var(--radius-xs);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--accent3);
+    margin: 8px 20px;
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* ── Tooltip (fee detail) ── */
+  .fee-detail {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text3);
+    padding: 0 20px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .fee-detail-item {
+    display: flex;
+    justify-content: space-between;
+    background: var(--surface2);
+    padding: 6px 10px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border);
+  }
+
+  .fee-detail-item span:last-child { color: var(--text); }
+
+  @media (max-width: 480px) {
+    .platform-grid { grid-template-columns: 1fr 1fr; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .fee-detail { grid-template-columns: 1fr; }
+    input[type="number"] { width: 90px; }
+    h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="app-badge"><span>📊</span> ProfitCalc</div>
+      <h1>Profit <em>Net</em> Réel</h1>
+      <p class="header-sub">Calculateur e-commerce en temps réel</p>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span class="icon" id="themeIcon">☀️</span>
+      <span id="themeLabel">Clair</span>
+    </button>
+  </header>
+
+  <!-- Results Panel -->
+  <div class="results-panel" id="resultsPanel">
+    <div class="profit-main">
+      <div>
+        <div class="profit-label">Profit Net</div>
+        <div class="profit-value neutral" id="profitValue">—</div>
+        <div class="profit-change neutral" id="marginBadge" style="display:none"></div>
+      </div>
+      <div style="text-align:right">
+        <div class="profit-label">Après remise</div>
+        <div class="profit-value neutral" id="profitDiscounted" style="font-size:22px;color:var(--text2)">—</div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label"><span class="metric-dot"></span> Marge nette</div>
+        <div class="metric-value" id="margeValue">—</div>
+        <div class="metric-sub">sur prix de vente</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label"><span class="metric-dot roi"></span> ROI</div>
+        <div class="metric-value" id="roiValue">—</div>
+        <div class="metric-sub">retour sur achat</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label"><span class="metric-dot fees"></span> Total frais</div>
+        <div class="metric-value" id="totalFeesValue">—</div>
+        <div class="metric-sub">plateforme + port</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label"><span class="metric-dot revenue"></span> CA net TVA</div>
+        <div class="metric-value" id="revenueHT">—</div>
+        <div class="metric-sub">hors taxes</div>
+      </div>
+    </div>
+
+    <div class="breakdown-bar" id="breakdownBar" style="display:none">
+      <div class="bar-label">Répartition du prix de vente</div>
+      <div class="bar-track">
+        <div class="bar-segment cost" id="barCost" style="width:0%"></div>
+        <div class="bar-segment fees" id="barFees" style="width:0%"></div>
+        <div class="bar-segment shipping" id="barShipping" style="width:0%"></div>
+        <div class="bar-segment profit" id="barProfit" style="width:0%"></div>
+      </div>
+      <div class="bar-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div> Coût</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent4)"></div> Frais plateforme</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div> Port</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Profit</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Platform Section -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon blue">🛒</div>
+      <div class="section-title">Plateforme de vente</div>
+    </div>
+    <div class="platform-grid">
+      <button class="platform-btn active" data-platform="amazon" onclick="selectPlatform(this)">
+        <div class="platform-emoji">📦</div>
+        <div class="platform-name">Amazon</div>
+        <div class="platform-fee">15% de commission</div>
+      </button>
+      <button class="platform-btn" data-platform="vinted" onclick="selectPlatform(this)">
+        <div class="platform-emoji">👗</div>
+        <div class="platform-name">Vinted</div>
+        <div class="platform-fee">0% vendeur</div>
+      </button>
+      <button class="platform-btn" data-platform="shopify" onclick="selectPlatform(this)">
+        <div class="platform-emoji">🏪</div>
+        <div class="platform-name">Shopify + Stripe</div>
+        <div class="platform-fee">2% + 1.5%</div>
+      </button>
+      <button class="platform-btn" data-platform="custom" onclick="selectPlatform(this)">
+        <div class="platform-emoji">⚙️</div>
+        <div class="platform-name">Personnalisé</div>
+        <div class="platform-fee">Définir %</div>
+      </button>
+    </div>
+    <div class="field-row custom-fee-row" id="customFeeRow">
+      <div class="field-icon">🔢</div>
+      <div class="field-label">Frais personnalisés<small>Commission de la plateforme</small></div>
+      <div class="field-input-wrap">
+        <input type="number" id="customFee" min="0" max="100" step="0.1" placeholder="0.0" oninput="calc()">
+        <span class="unit">%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inputs Section -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon green">💶</div>
+      <div class="section-title">Prix & Coûts</div>
+    </div>
+    <div class="field-row">
+      <div class="field-icon">🏷️</div>
+      <div class="field-label">Prix de vente<small>Prix affiché à l'acheteur</small></div>
+      <div class="field-input-wrap">
+        <input type="number" id="salePrice" min="0" step="0.01" placeholder="0.00" oninput="calc()">
+        <span class="unit">€</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-icon">🛍️</div>
+      <div class="field-label">Coût d'achat HT<small>Prix payé au fournisseur</small></div>
+      <div class="field-input-wrap">
+        <input type="number" id="costPrice" min="0" step="0.01" placeholder="0.00" oninput="calc()">
+        <span class="unit">€</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-icon">📬</div>
+      <div class="field-label">Frais de port<small>Coût d'expédition</small></div>
+      <div class="field-input-wrap">
+        <input type="number" id="shippingCost" min="0" step="0.01" placeholder="0.00" oninput="calc()">
+        <span class="unit">€</span>
+      </div>
+    </div>
+    <div class="error-msg" id="errorMsg">⚠️ Le prix de vente doit être supérieur à 0 pour calculer les résultats.</div>
+  </div>
+
+  <!-- Tax & Ads Section -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon orange">📊</div>
+      <div class="section-title">Taxes & Publicité</div>
+    </div>
+    <div class="field-row">
+      <div class="field-icon">🧾</div>
+      <div class="field-label">TVA<small>Taux de TVA applicable</small></div>
+      <div class="field-input-wrap">
+        <input type="number" id="tva" min="0" max="100" step="0.1" value="20" oninput="calc()">
+        <span class="unit">%</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-icon">📣</div>
+      <div class="field-label">Frais pub<small>Optionnel — Google Ads, Meta…</small></div>
+      <div class="field-input-wrap">
+        <input type="number" id="adCost" min="0" step="0.01" placeholder="0.00" oninput="calc()">
+        <span class="unit">€</span>
+      </div>
+    </div>
+    <div class="fee-detail" id="feeDetail" style="display:none">
+      <div class="fee-detail-item"><span>Frais plateforme</span><span id="detailPlatform">—</span></div>
+      <div class="fee-detail-item"><span>TVA déduite</span><span id="detailTVA">—</span></div>
+      <div class="fee-detail-item"><span>Frais pub</span><span id="detailAds">—</span></div>
+      <div class="fee-detail-item"><span>Total déductions</span><span id="detailTotal">—</span></div>
+    </div>
+  </div>
+
+  <!-- Discount Slider -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon red">🎯</div>
+      <div class="section-title">Simulateur de remise</div>
+    </div>
+    <div class="slider-section">
+      <div class="slider-header">
+        <div class="slider-title">💸 Impact d'une remise</div>
+        <div class="slider-value-badge" id="discountBadge">0%</div>
+      </div>
+      <input type="range" id="discountSlider" min="0" max="50" value="0" step="1" oninput="updateDiscount(this.value)">
+      <div class="slider-labels"><span>0%</span><span>25%</span><span>50%</span></div>
+      <div class="slider-impact" id="sliderImpact">
+        <span class="impact-label">Profit estimé avec remise</span>
+        <div class="impact-values">
+          <span class="impact-before" id="impactBefore">—</span>
+          <span class="impact-arrow">→</span>
+          <span class="impact-after" id="impactAfter">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset -->
+  <button class="reset-btn" onclick="resetAll()">
+    🔄 Réinitialiser tous les champs
+  </button>
+
+  <div class="footer">ProfitCalc • Calculs indicatifs, non contractuels</div>
+</div>
+
+<script>
+  // ─── State ───
+  const platforms = {
+    amazon:  { fee: 15, stripe: 0 },
+    vinted:  { fee: 0,  stripe: 0 },
+    shopify: { fee: 2,  stripe: 1.5 },
+    custom:  { fee: 0,  stripe: 0 }
+  };
+
+  let currentPlatform = 'amazon';
+  let discountPct = 0;
+
+  // ─── Platform ───
+  function selectPlatform(btn) {
+    document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPlatform = btn.dataset.platform;
+    const customRow = document.getElementById('customFeeRow');
+    if (currentPlatform === 'custom') {
+      customRow.classList.add('visible');
+    } else {
+      customRow.classList.remove('visible');
+    }
+    calc();
+  }
+
+  // ─── Main Calculation ───
+  function calc() {
+    const salePrice   = parseFloat(document.getElementById('salePrice').value)   || 0;
+    const costPrice   = parseFloat(document.getElementById('costPrice').value)    || 0;
+    const shipping    = parseFloat(document.getElementById('shippingCost').value) || 0;
+    const tvaPct      = parseFloat(document.getElementById('tva').value)          || 0;
+    const adCost      = parseFloat(document.getElementById('adCost').value)       || 0;
+    const customFee   = parseFloat(document.getElementById('customFee').value)    || 0;
+
+    const errorMsg = document.getElementById('errorMsg');
+
+    // Error: no sale price
+    if (salePrice === 0 && (costPrice > 0 || shipping > 0)) {
+      errorMsg.classList.add('visible');
+    } else {
+      errorMsg.classList.remove('visible');
+    }
+
+    if (salePrice <= 0) {
+      setNeutral();
+      return;
+    }
+
+    // Platform fee
+    let p = platforms[currentPlatform];
+    let platformFeePct = currentPlatform === 'custom' ? customFee : p.fee;
+    let stripePct = p.stripe;
+
+    // Calculations
+    const platformFee = salePrice * (platformFeePct / 100);
+    const stripeFee   = salePrice * (stripePct / 100);
+    const totalPlatformFee = platformFee + stripeFee;
+
+    // TVA: on soustrait la TVA du prix de vente (prix TTC → HT)
+    const tvaAmount = salePrice - (salePrice / (1 + tvaPct / 100));
+    const salePriceHT = salePrice - tvaAmount;
+
+    // Profit net
+    const profit = salePriceHT - costPrice - shipping - totalPlatformFee - adCost;
+
+    // Margin (on sale price HT)
+    const margin = salePriceHT > 0 ? (profit / salePriceHT) * 100 : 0;
+
+    // ROI
+    const totalCost = costPrice + shipping + totalPlatformFee + adCost;
+    const roi = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+
+    // Discounted profit
+    const discountedSalePrice = salePrice * (1 - discountPct / 100);
+    const discountedHT = discountedSalePrice - (discountedSalePrice - discountedSalePrice / (1 + tvaPct / 100));
+    const discountedPlatformFee = discountedSalePrice * ((platformFeePct + stripePct) / 100);
+    const profitDiscounted = discountedHT - costPrice - shipping - discountedPlatformFee - adCost;
+
+    // Display
+    updateDisplay({
+      profit, margin, roi,
+      totalPlatformFee, shipping, adCost,
+      salePriceHT, costPrice, salePrice,
+      tvaAmount, profitDiscounted,
+      platformFeePct, stripePct, totalCost
+    });
+  }
+
+  function updateDisplay(d) {
+    const { profit, margin, roi, totalPlatformFee, shipping, adCost,
+            salePriceHT, costPrice, salePrice, tvaAmount,
+            profitDiscounted, platformFeePct, stripePct } = d;
+
+    const fmt = (v) => (v >= 0 ? '+' : '') + v.toFixed(2) + '€';
+    const fmtClean = (v) => v.toFixed(2) + '€';
+    const fmtPct = (v) => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+
+    // Profit main
+    const pv = document.getElementById('profitValue');
+    pv.textContent = fmt(profit);
+    pv.className = 'profit-value ' + (profit > 0 ? 'positive' : profit < 0 ? 'negative' : 'neutral');
+    pv.classList.add('value-flash');
+    setTimeout(() => pv.classList.remove('value-flash'), 300);
+
+    // Margin badge
+    const mb = document.getElementById('marginBadge');
+    mb.style.display = 'inline-flex';
+    mb.textContent = fmtPct(margin) + ' marge';
+    mb.className = 'profit-change ' + (margin >= 0 ? 'positive' : 'negative');
+
+    // Metrics
+    setMetric('margeValue', fmtPct(margin), margin);
+    setMetric('roiValue', fmtPct(roi), roi);
+    document.getElementById('totalFeesValue').textContent = fmtClean(totalPlatformFee + shipping + adCost + tvaAmount);
+    document.getElementById('revenueHT').textContent = fmtClean(salePriceHT);
+
+    // Discounted profit
+    const pd = document.getElementById('profitDiscounted');
+    pd.textContent = discountPct > 0 ? fmt(profitDiscounted) : '—';
+    pd.style.color = profitDiscounted >= 0 ? 'var(--positive)' : 'var(--negative)';
+
+    // Slider impact
+    document.getElementById('impactBefore').textContent = fmtClean(profit);
+    document.getElementById('impactAfter').textContent = fmtClean(profitDiscounted);
+    document.getElementById('impactAfter').style.color = profitDiscounted >= 0 ? 'var(--positive)' : 'var(--negative)';
+
+    // Breakdown bar
+    const breakdown = document.getElementById('breakdownBar');
+    breakdown.style.display = 'block';
+    const totalBar = Math.max(salePrice, 0.01);
+    const costPct = Math.max(0, Math.min(100, (costPrice / totalBar) * 100));
+    const feesPct = Math.max(0, Math.min(100 - costPct, ((totalPlatformFee + tvaAmount + adCost) / totalBar) * 100));
+    const shipPct = Math.max(0, Math.min(100 - costPct - feesPct, (shipping / totalBar) * 100));
+    const profPct = Math.max(0, 100 - costPct - feesPct - shipPct);
+
+    document.getElementById('barCost').style.width = costPct + '%';
+    document.getElementById('barFees').style.width = feesPct + '%';
+    document.getElementById('barShipping').style.width = shipPct + '%';
+    document.getElementById('barProfit').style.width = profPct + '%';
+
+    // Fee detail
+    const fd = document.getElementById('feeDetail');
+    fd.style.display = 'grid';
+    document.getElementById('detailPlatform').textContent = fmtClean(totalPlatformFee);
+    document.getElementById('detailTVA').textContent = fmtClean(tvaAmount);
+    document.getElementById('detailAds').textContent = fmtClean(adCost);
+    document.getElementById('detailTotal').textContent = fmtClean(totalPlatformFee + tvaAmount + adCost + shipping);
+  }
+
+  function setMetric(id, val, num) {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.style.color = num > 0 ? 'var(--positive)' : num < 0 ? 'var(--negative)' : 'var(--text)';
+  }
+
+  function setNeutral() {
+    ['profitValue','margeValue','roiValue','totalFeesValue','revenueHT','profitDiscounted','impactBefore','impactAfter'].forEach(id => {
+      const el = document.getElementById(id);
+      el.textContent = '—';
+      el.style.color = '';
+    });
+    document.getElementById('marginBadge').style.display = 'none';
+    document.getElementById('breakdownBar').style.display = 'none';
+    document.getElementById('feeDetail').style.display = 'none';
+    ['barCost','barFees','barShipping','barProfit'].forEach(id => {
+      document.getElementById(id).style.width = '0%';
+    });
+  }
+
+  // ─── Discount Slider ───
+  function updateDiscount(val) {
+    discountPct = parseInt(val);
+    document.getElementById('discountBadge').textContent = val + '%';
+
+    // Update slider gradient
+    const slider = document.getElementById('discountSlider');
+    const pct = (discountPct / 50) * 100;
+    slider.style.background = `linear-gradient(to right, var(--accent4) 0%, var(--accent4) ${pct}%, var(--surface3) ${pct}%, var(--surface3) 100%)`;
+
+    calc();
+  }
+
+  // ─── Theme ───
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.dataset.theme === 'dark';
+    html.dataset.theme = isDark ? 'light' : 'dark';
+    document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+    document.getElementById('themeLabel').textContent = isDark ? 'Sombre' : 'Clair';
+  }
+
+  // ─── Reset ───
+  function resetAll() {
+    ['salePrice','costPrice','shippingCost','adCost','customFee'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('tva').value = 20;
+    document.getElementById('discountSlider').value = 0;
+    updateDiscount(0);
+    discountPct = 0;
+    document.getElementById('discountBadge').textContent = '0%';
+
+    document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-platform="amazon"]').classList.add('active');
+    currentPlatform = 'amazon';
+    document.getElementById('customFeeRow').classList.remove('visible');
+
+    setNeutral();
+  }
+
+  // Init slider gradient
+  document.getElementById('discountSlider').style.background = `linear-gradient(to right, var(--accent4) 0%, var(--surface3) 0%)`;
+</script>
+</body>
+</html>
